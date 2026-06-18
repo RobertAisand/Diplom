@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package cascade;
+
+// go_package определяет пакет генерируемого Go-кода.
+option go_package = "dispatcher/api/proto;proto";
+
+// Запрос qt = ⟨xt, μt, τt⟩ (выражение 2.16).
+message Request {
+  string request_id    = 1;  // идентификатор запроса
+  string text          = 2;  // текстовое тело xt
+  repeated double meta = 3;  // вектор метаданных μt
+  int64 arrival_ts     = 4;  // отметка поступления τt (unix-наносекунды)
+}
+
+// Решение макро-уровня для конкретного Сегмента.
+message Activation {
+  string segment_id  = 1;  // идентификатор Сегмента-адресата
+  double macro_score = 2;  // оценка скоринга sk (выр. 2.21)
+}
+
+// Единица потока, пересекающая границу уровней (подраздел 3.1.3).
+message SegmentRequest {
+  Request request           = 1;  // сам запрос
+  Activation activation     = 2;  // решение макро-уровня для этого Сегмента
+  repeated string cohort    = 3;  // полное множество ℕ_act (для изоляции контекста)
+}
+
+// Вердикт мезо-уровня: решающее правило Махаланобиса (выр. 2.29).
+message MesoVerdict {
+  bool context_admitted       = 1;  // допущен ли контекст: δk_mah ≤ τd
+  double mahalanobis_distance = 2;  // вычисленное расстояние δk_mah
+  double threshold            = 3;  // порог контекстной близости τd
+  bool routed_to_base         = 4;  // перенаправление в Базовый сегмент
+}
+
+// Отчёт о фактической разреженности микро-уровня (STE-режим, выр. 2.46).
+message SparsityReport {
+  double rho_micro    = 1;  // коэффициент разреженности ρ_micro
+  uint32 active_units = 2;  // число фактически активных узлов
+  uint32 total_units  = 3;  // общее число узлов слоёв Сегмента
+}
+
+// Ответ Сегмента: результат прохождения мезо- и микро-уровней.
+message SegmentResponse {
+  string request_id       = 1;
+  string segment_id       = 2;
+  string output_text      = 3;  // результат инференса (пусто при отсечении)
+  MesoVerdict meso        = 4;
+  SparsityReport sparsity = 5;
+}
+
+// Сервис каскада: точка композиции Φ_meso ∘ Φ_macro.
+service CascadeProcessor {
+  rpc ProcessSegment(SegmentRequest) returns (SegmentResponse);
+}

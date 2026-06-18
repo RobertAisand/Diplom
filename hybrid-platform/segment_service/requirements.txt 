@@ -1,0 +1,8 @@
+# Зависимости Python-сервиса Сегмента и экспериментов Главы 4.
+# Установка:  pip install -r requirements.txt
+
+numpy>=1.26
+tensorflow==2.15          # на Apple Silicon при сбое заменить на: tensorflow-macos
+pytest>=8.0
+grpcio>=1.60
+grpcio-tools>=1.60

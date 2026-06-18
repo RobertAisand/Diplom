@@ -1,0 +1,22 @@
+# Композиция платформы для среды разработки.
+services:
+  dispatcher:
+    build: ./dispatcher
+    depends_on: [segment-med, segment-chem]
+    ports: ["8080:8080"]
+
+  segment-med:
+    build: ./segment_service
+    environment:
+      SEGMENT_ID: MED
+      LISTEN_ADDRESS: "[::]:50051"
+      MESO_THRESHOLD: "12.0"
+    ports: ["50051:50051"]
+
+  segment-chem:
+    build: ./segment_service
+    environment:
+      SEGMENT_ID: CHEM
+      LISTEN_ADDRESS: "[::]:50052"
+      MESO_THRESHOLD: "12.0"
+    ports: ["50052:50052"]
